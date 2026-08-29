@@ -1,0 +1,23 @@
+# Compiled Python files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.env
+venv/
+env/
+ENV/
+
+# Logs and runtime files
+*.log
+*.pid
+
+# OS and IDE files
+.DS_Store
+.idea/
+.vscode/
+
+# Jenkins temporary directories
+python-app-deploy/

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zepto-frontend
+  labels:
+    app: zepto-frontend
+    tier: frontend
+    env: dev
+spec:
+  containers:
+  - name: nginx-server
+    image: nginx:1.25-alpine
+    ports:
+    - containerPort: 80
+      name: http
+    resources:
+      requests:
+        memory: "64Mi"
+        cpu: "50m"
+      limits:
+        memory: "128Mi"
+        cpu: "100m"
