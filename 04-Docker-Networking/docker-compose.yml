@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  backend-api:
+    build: .
+    container_name: backend-api
+    networks:
+      - custom-app-network
+    ports:
+      - "5000:5000"
+    restart: unless-stopped
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: securepassword123
+      MYSQL_DATABASE: devops_db
+    networks:
+      - custom-app-network
+    restart: unless-stopped
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: redis-cache
+    networks:
+      - custom-app-network
+    restart: unless-stopped
+
+networks:
+  custom-app-network:
+    name: custom-app-network
+    driver: bridge
