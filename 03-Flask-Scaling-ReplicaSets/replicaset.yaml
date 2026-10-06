@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: flash-deal-rs
+  labels:
+    app: flash-deal
+    tier: backend
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: flash-deal
+  template:
+    metadata:
+      labels:
+        app: flash-deal
+        tier: backend
+    spec:
+      containers:
+      - name: flash-service-container
+        image: flash-service:1.0
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5000
+          name: http
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "96Mi"
+          limits:
+            cpu: "300m"
+            memory: "192Mi"
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 3
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 5000
+          initialDelaySeconds: 8
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flash-deal-service
+  labels:
+    app: flash-deal
+spec:
+  type: ClusterIP
+  selector:
+    app: flash-deal
+  ports:
+  - port: 80
+    targetPort: 5000
+    protocol: TCP
+    name: http
