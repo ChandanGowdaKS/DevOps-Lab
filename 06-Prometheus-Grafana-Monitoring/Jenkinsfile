@@ -1,0 +1,60 @@
+pipeline {
+    agent any
+
+    environment {
+        APP_IMAGE = "chandan/dispatch-metrics:latest"
+    }
+
+    stages {
+        stage('Docker Preflight') {
+            steps {
+                script {
+                    echo 'Validating Docker installation...'
+                    sh 'docker --version'
+                    sh 'docker info > /dev/null'
+                    echo 'Docker daemon is active and responsive.'
+                }
+            }
+        }
+
+        stage('Build Exporter Image') {
+            steps {
+                echo 'Building metrics exporter container image...'
+                sh "docker build -t ${APP_IMAGE} 06-Prometheus-Grafana-Monitoring/"
+            }
+        }
+
+        stage('Launch Exporter Service') {
+            steps {
+                echo 'Starting metrics exporter daemon...'
+                sh """
+                docker rm -f metrics-exporter || true
+                docker run -d --name metrics-exporter -p 8000:8000 ${APP_IMAGE}
+                """
+            }
+        }
+
+        stage('Deploy Prometheus and Grafana') {
+            steps {
+                echo 'Deploying monitoring stack...'
+                sh """
+                docker rm -f prometheus-server grafana-dashboard || true
+                docker run -d --name prometheus-server -p 9090:9090 \
+                  -v \$(pwd)/06-Prometheus-Grafana-Monitoring/prometheus.yml:/etc/prometheus/prometheus.yml \
+                  -v \$(pwd)/06-Prometheus-Grafana-Monitoring/alert_rules.yml:/etc/prometheus/alert_rules.yml \
+                  prom/prometheus
+                docker run -d --name grafana-dashboard -p 3000:3000 grafana/grafana
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Monitoring pipeline completed successfully! Prometheus is at :9090, Grafana is at :3000."
+        }
+        failure {
+            echo "Pipeline build failed. Inspect logs for details."
+        }
+    }
+}

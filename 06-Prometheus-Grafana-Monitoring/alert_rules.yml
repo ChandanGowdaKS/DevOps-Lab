@@ -1,0 +1,22 @@
+groups:
+  - name: zapptto_operations_alerts
+    rules:
+      - alert: HighPendingOrdersAlert
+        expr: current_pending_orders > 12
+        for: 15s
+        labels:
+          severity: warning
+          team: logistics-ops
+        annotations:
+          summary: "Delivery Backlog Alert: Pending orders above threshold"
+          description: "Pending delivery orders exceeded 12 for over 15 seconds (Current: {{ $value }})."
+
+      - alert: CriticalDeliveryDelayAlert
+        expr: (delivery_duration_seconds_sum / delivery_duration_seconds_count) > 28
+        for: 15s
+        labels:
+          severity: critical
+          team: logistics-ops
+        annotations:
+          summary: "SLA Breach Alert: High average delivery time"
+          description: "Average order delivery duration is currently {{ $value }}s, breaching the 28s SLA threshold."
