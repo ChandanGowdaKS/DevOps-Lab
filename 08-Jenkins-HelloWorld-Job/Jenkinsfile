@@ -1,0 +1,30 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('SCM Checkout') {
+            steps {
+                echo 'Checking out source repository...'
+            }
+        }
+
+        stage('Execute Hello World Script') {
+            steps {
+                echo 'Executing run_job.sh script...'
+                sh '''
+                chmod +x 08-Jenkins-HelloWorld-Job/run_job.sh
+                ./08-Jenkins-HelloWorld-Job/run_job.sh
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "HelloWorld Job completed with SUCCESS status."
+        }
+        failure {
+            echo "HelloWorld Job execution failed."
+        }
+    }
+}
