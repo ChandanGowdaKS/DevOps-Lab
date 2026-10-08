@@ -1,0 +1,78 @@
+pipeline {
+    agent any
+
+    environment {
+        STAGING_DIR = "${WORKSPACE}/order-app-staging"
+        MODULE_PATH = "09-Jenkins-MultiStage-Pipeline"
+    }
+
+    stages {
+        stage('Build & Dependencies') {
+            steps {
+                echo 'Stage 1: Installing Python packages from requirements.txt...'
+                sh '''
+                python3 -m pip install --upgrade pip || true
+                python3 -m pip install -r ${MODULE_PATH}/requirements.txt || true
+                '''
+            }
+        }
+
+        stage('Automated Unit Testing') {
+            steps {
+                echo 'Stage 2: Running automated test suite with unittest...'
+                sh '''
+                cd ${MODULE_PATH}
+                PYTHONPATH=. python3 -m unittest discover -s tests
+                '''
+            }
+        }
+
+        stage('Artifact Staging & Deploy') {
+            steps {
+                echo 'Stage 3: Staging code to production simulation directory...'
+                sh '''
+                mkdir -p ${STAGING_DIR}
+                cp ${MODULE_PATH}/app.py ${STAGING_DIR}/
+                '''
+            }
+        }
+
+        stage('Launch Background Service') {
+            steps {
+                echo 'Stage 4: Starting Flask application process in background...'
+                sh '''
+                nohup python3 ${STAGING_DIR}/app.py > ${STAGING_DIR}/service.log 2>&1 &
+                echo $! > ${STAGING_DIR}/service.pid
+                sleep 2
+                '''
+            }
+        }
+
+        stage('Smoke Test & Verification') {
+            steps {
+                echo 'Stage 5: Validating live service response with curl...'
+                sh '''
+                curl -s http://localhost:5000/api/health | grep '"health":"UP"'
+                echo "Smoke test passed successfully!"
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Teardown: Terminating background microservice...'
+            sh '''
+            if [ -f ${STAGING_DIR}/service.pid ]; then
+                kill $(cat ${STAGING_DIR}/service.pid) || true
+            fi
+            '''
+        }
+        success {
+            echo "CI/CD Pipeline ran to completion: ALL 5 STAGES PASSED."
+        }
+        failure {
+            echo "CI/CD Pipeline encountered an error during build/test."
+        }
+    }
+}
