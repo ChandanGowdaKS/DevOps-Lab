@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-service-deploy
+  namespace: default
+  labels:
+    app: order-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: order-service
+  template:
+    metadata:
+      labels:
+        app: order-service
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: order-service
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: order-container
+        image: order-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"

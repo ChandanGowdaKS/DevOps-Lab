@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service-deploy
+  namespace: default
+  labels:
+    app: inventory-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: inventory-service
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: inventory-service
+            topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: inventory-container
+        image: inventory-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
