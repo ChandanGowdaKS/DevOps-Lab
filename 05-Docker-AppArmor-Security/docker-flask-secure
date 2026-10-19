@@ -1,0 +1,29 @@
+#include <tunables/global>
+
+profile docker-flask-secure flags=(attach_disconnected,mediate_deleted) {
+    #include <abstractions/base>
+    #include <abstractions/python>
+
+    # Network access for Flask binding on port 5050
+    network inet stream,
+    network inet6 stream,
+
+    # Deny access to sensitive host and system directories
+    deny /etc/** r,
+    deny /var/** rw,
+    deny /root/** rwklx,
+
+    # Deny direct execution of system shells and system binaries
+    deny /bin/** rmix,
+    deny /usr/bin/** rmix,
+
+    # Full read/write within application sandbox
+    /app/** rwk,
+    /usr/local/lib/python*/** r,
+
+    # Linux capability confinement
+    capability net_bind_service,
+    deny capability sys_admin,
+    deny capability sys_ptrace,
+    deny capability sys_rawio,
+}
